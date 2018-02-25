@@ -1,0 +1,5 @@
+Session_ID=15195883055566218
+Time=1519590444.5433638
+Params: {'parser_info': Namespace(circular=False, err=[0], input_file=['FR682468.1.fasta'], iter=[25], jobs=[-1], log='log.txt', loss=[0.2], mean=[1000], out=None, read=[150], seed=[None], size=[500000], type=['pe'], verbose=True)}
+The program completed disassembling without any errors. Elapsed time=2138.9872438907623
+
