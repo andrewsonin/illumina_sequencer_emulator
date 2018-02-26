@@ -6,6 +6,8 @@ from numpy.random import random_integers, seed
 from multiprocessing import cpu_count
 from pdf import ModifiedExponential
 
+MAX_SEED = 4294967295  # 2**32 - 1
+
 
 class Profiler(object):
     def __enter__(self):
@@ -35,15 +37,15 @@ def cmd_parse():
                         nargs=1,
                         help='Name or address of .fasta-file containing the genome to be disassembled')
 
-    parser.add_argument('-m', '--mean', type=float, action='store', nargs=1, default=[1000],
+    parser.add_argument('-m', '--mean', type=float, action='store', default=[1000], nargs=1,
                         help='Mean length of fragments. Default is 1000')
-    parser.add_argument('-l', '--loss', type=float, action='store', nargs=1, default=[0.2],
+    parser.add_argument('-l', '--loss', type=float, action='store', default=[0.2], nargs=1,
                         help='Fraction of fragments to lose. Default is 0.2')
     parser.add_argument('-r', '--read', type=int, action='store', default=[150], nargs=1,
                         help='Read length. Default is 150')
     parser.add_argument('-e', '--err', type=float, action='store', default=[0], nargs=1,
                         help='Fraction of erroneous nucleotides. Default is 0')
-    parser.add_argument('-t', '--type', type=str, action='store', nargs=1, default=['pe'],
+    parser.add_argument('-t', '--type', type=str, action='store', default=['pe'], nargs=1,
                         help='Type of sequencing. Argument \'pe\' means pair-end sequencing, \'sr\' means singe-read '
                              'one. Passing other arguments raises an error. If not given, the program emulates \'pe\'')
     parser.add_argument('-c', '--circular', action='store_true', help='Is the genome of interest circular')
@@ -66,7 +68,7 @@ def cmd_parse():
     params = {'parser_info': args}
     session_id = int(''.join(str(time()).split('.')))
 
-    if args.seed[0] is not None and not 0 <= args.seed[0] <= 4294967295:
+    if args.seed[0] is not None and not 0 <= args.seed[0] <= MAX_SEED:
         print_verbose('ERROR! Seed must be between 0 and 2**32 - 1', session_id, args.log, args.verbose, params)
         raise ValueError
 
@@ -138,7 +140,7 @@ def out_write(file, desc, iteration, seq_type, reads, thread, my_seed):
 
 def disassembler(fasta_genome, seq_type, mean_len, fragment_num, out_file, depth_of_seq, read_length, thread, my_seed):
     if my_seed is None:
-        my_seed = int(''.join(str(time()).split('.'))) % 4294967295
+        my_seed = int(''.join(str(time()).split('.'))) % MAX_SEED
     seed(my_seed)
     for identifier, info in fasta_genome.items():
         len_of_seq = len(info.seq)

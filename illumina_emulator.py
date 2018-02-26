@@ -1,4 +1,4 @@
-from functions import print_verbose, cmd_parse, disassembler
+from functions import MAX_SEED, print_verbose, cmd_parse, disassembler
 from Bio.SeqIO import parse, to_dict
 from multiprocessing import Process
 from time import time
@@ -18,7 +18,7 @@ def main():
     for job, fragment_num in enumerate(fragment_nums):
         processes.append(Process(target=disassembler,
                                  args=(fasta_genome, seq_type, mean_len, fragment_num, out_file, depth, read_length,
-                                       job, (my_seed + job) % 4294967295 if my_seed is not None else None)))
+                                       job, (my_seed + job) % MAX_SEED if my_seed is not None else None)))
         processes[-1].start()
     for process in processes:
         process.join()
