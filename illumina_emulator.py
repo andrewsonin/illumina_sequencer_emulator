@@ -16,9 +16,10 @@ def main():
     fragment_nums.append(fragment_num - sum(fragment_nums))
     processes = []
     for job, fragment_num in enumerate(fragment_nums):
+        seeding = ((my_seed + job) % MAX_SEED if my_seed != -1 else my_seed) if my_seed is not None else None
         processes.append(Process(target=disassembler,
                                  args=(fasta_genome, seq_type, mean_len, fragment_num, out_file, depth, read_length,
-                                       job, (my_seed + job) % MAX_SEED if my_seed is not None else None)))
+                                       job, seeding)))
         processes[-1].start()
     for process in processes:
         process.join()

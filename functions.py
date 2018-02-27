@@ -17,7 +17,10 @@ class Profiler(object):
         print('Elapsed time: {:.3f} sec'.format(time() - self._startTime))
 
 
-def print_verbose(string, session_id, logfile=None, verbose=False, params=None):
+def get_time_dependent_int(): return int(''.join(str(time()).split('.')))
+
+
+def print_verbose(string, session_id, logfile='', verbose=False, params=None):
     if verbose:
         with open(logfile, 'a', encoding='utf8') as out:
             out.write('Session_ID=' + str(session_id))
@@ -44,15 +47,16 @@ def cmd_parse():
     parser.add_argument('-r', '--read', type=int, action='store', default=[150], nargs=1,
                         help='Read length. Default is 150')
     parser.add_argument('-e', '--err', type=float, action='store', default=[0], nargs=1,
-                        help='Fraction of erroneous nucleotides. Default is 0')
+                        help='Fraction of erroneous nucleotides. Default is 0')  # FIXME!!! IS not implemented
     parser.add_argument('-t', '--type', type=str, action='store', default=['pe'], nargs=1,
                         help='Type of sequencing. Argument \'pe\' means pair-end sequencing, \'sr\' means singe-read '
                              'one. Passing other arguments raises an error. If not given, the program emulates \'pe\'')
-    parser.add_argument('-c', '--circular', action='store_true', help='Is the genome of interest circular')
+    parser.add_argument('-c', '--circular', action='store_true',
+                        help='Is the genome of interest circular')  # FIXME!!! IS not implemented
     parser.add_argument('-v', '--verbose', action='store_true', help='Logging')
     parser.add_argument('-lg', '--log', type=str, action='store', default='log.txt',
                         help='Name or address of log-file. Default is log.txt')
-    parser.add_argument('-s', '--seed', type=int, action='store', default=[None], nargs=1,
+    parser.add_argument('-s', '--seed', type=int, action='store', default=[-1], nargs=1,
                         help='Seed for numpy. Must be between 0 and 2**32 - 1. Default is computed using global time')
     parser.add_argument('-o', '--out', type=str, action='store',
                         help='Name of output file. Default is name of input + disassemble.fastq')
@@ -63,14 +67,17 @@ def cmd_parse():
                         help='Number of reads per iteration. Default is 500')
     parser.add_argument('-i', '--iter', type=int, action='store', default=[5], nargs=1,
                         help='Number of iterations. Default is 5')
+    parser.add_argument('-w', '--no_seed', action='store_true', help='Without any seeding including random internal')
 
     args = parser.parse_args()
     params = {'parser_info': args}
-    session_id = int(''.join(str(time()).split('.')))
+    session_id = get_time_dependent_int()
 
-    if args.seed[0] is not None and not 0 <= args.seed[0] <= MAX_SEED:
+    if args.seed[0] is not None and args.seed[0] != -1 and not 0 <= args.seed[0] <= MAX_SEED:
         print_verbose('ERROR! Seed must be between 0 and 2**32 - 1', session_id, args.log, args.verbose, params)
         raise ValueError
+    elif args.no_seed:
+        args.seed[0] = None
 
     file = args.input_file[0]
     if not isfile(file):
@@ -114,7 +121,7 @@ def generate_samples(distribution, len_of_seq, fragment_num):
 
 
 def get_fragments(seq, samples):
-    cleavage_sites = random_integers(0, len(seq) - 1, (len(samples),))
+    cleavage_sites = random_integers(0, len(seq) - 1, (len(samples)))
     seq_len = len(seq)
     return [seq[site:end] for site, end in zip(cleavage_sites, cleavage_sites + samples) if end < seq_len]
 
@@ -135,13 +142,14 @@ def out_write(file, desc, iteration, seq_type, reads, thread, my_seed):
                 out.write(description + ' read=' + str(number) + '.' + str(i) + '\n')
                 out.write(str(read[i]))
                 out.write('\n+\n')
-                out.write('G' * len(read[i]) + '\n')  # FIXME!!!
+                out.write('G' * len(read[i]) + '\n')  # FIXME!!! Error distribution is not implemented
 
 
 def disassembler(fasta_genome, seq_type, mean_len, fragment_num, out_file, depth_of_seq, read_length, thread, my_seed):
-    if my_seed is None:
-        my_seed = int(''.join(str(time()).split('.'))) % MAX_SEED
-    seed(my_seed)
+    if my_seed == -1:
+        my_seed = (thread + get_time_dependent_int()) % MAX_SEED
+    if my_seed is not None:
+        seed(my_seed)
     for identifier, info in fasta_genome.items():
         len_of_seq = len(info.seq)
         distribution = ModifiedExponential(len_of_seq / mean_len / 2, len_of_seq, name='ModifiedExponential')
