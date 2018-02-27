@@ -47,12 +47,12 @@ def cmd_parse():
     parser.add_argument('-r', '--read', type=int, action='store', default=[150], nargs=1,
                         help='Read length. Default is 150')
     parser.add_argument('-e', '--err', type=float, action='store', default=[0], nargs=1,
-                        help='Fraction of erroneous nucleotides. Default is 0')  # FIXME!!! IS not implemented
+                        help='Fraction of erroneous nucleotides. Default is 0')  # FIXME!!! Is not implemented
     parser.add_argument('-t', '--type', type=str, action='store', default=['pe'], nargs=1,
                         help='Type of sequencing. Argument \'pe\' means pair-end sequencing, \'sr\' means singe-read '
                              'one. Passing other arguments raises an error. If not given, the program emulates \'pe\'')
     parser.add_argument('-c', '--circular', action='store_true',
-                        help='Is the genome of interest circular')  # FIXME!!! IS not implemented
+                        help='Is the genome of interest circular')  # FIXME!!! Is not implemented
     parser.add_argument('-v', '--verbose', action='store_true', help='Logging')
     parser.add_argument('-lg', '--log', type=str, action='store', default='log.txt',
                         help='Name or address of log-file. Default is log.txt')
@@ -121,7 +121,7 @@ def generate_samples(distribution, len_of_seq, fragment_num):
 
 
 def get_fragments(seq, samples):
-    cleavage_sites = random_integers(0, len(seq) - 1, (len(samples)))
+    cleavage_sites = random_integers(0, len(seq) - 1, len(samples))
     seq_len = len(seq)
     return [seq[site:end] for site, end in zip(cleavage_sites, cleavage_sites + samples) if end < seq_len]
 
