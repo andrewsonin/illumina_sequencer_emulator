@@ -96,7 +96,7 @@ def cmd_parse():
     if args.out is not None:
         out_file = args.out
     else:
-        out_file = ('.'.join(''.join(file).split('.')[:-1]) + 'disassemble_{:s}_id{:d}.fastq')\
+        out_file = ('.'.join(''.join(file).split('.')[:-1]) + 'disassemble_{:s}_id{:d}.fastq') \
             .format(args.type[0], session_id)
 
     if args.jobs[0] == -1:
@@ -110,6 +110,20 @@ def cmd_parse():
 
     return file, out_file, args.mean[0], args.loss[0], args.read[0], args.err[0], args.type[0], args.circular, \
            args.verbose, args.log, args.seed[0], session_id, jobs, args.size[0], args.iter[0], params
+
+
+def disassembler(fasta_genome, seq_type, mean_len, fragment_num, out_file, depth_of_seq, read_length, thread, my_seed):
+    if my_seed == -1:
+        my_seed = (thread + get_time_dependent_int()) % MAX_SEED
+    if my_seed is not None:
+        seed(my_seed)
+    for identifier, info in fasta_genome.items():
+        len_of_seq = len(info.seq)
+        distribution = ModifiedExponential(len_of_seq / mean_len / 2, len_of_seq, name='ModifiedExponential')
+        for iteration in range(depth_of_seq):
+            out_write(out_file, info.description, iteration, seq_type,
+                      get_reads(get_fragments(info.seq, generate_samples(distribution, len_of_seq, fragment_num)),
+                                read_length), thread, my_seed)
 
 
 def generate_samples(distribution, len_of_seq, fragment_num):
@@ -138,17 +152,3 @@ def out_write(file, desc, iteration, seq_type, reads, thread, my_seed):
             for i in range(number_of_mates):
                 out.write((description + ' read={:d}.{:d}\n{:s}\n+\n').format(number, i, str(read[i])))
                 out.write('G' * len(read[i]) + '\n')  # FIXME!!! Error distribution is not implemented
-
-
-def disassembler(fasta_genome, seq_type, mean_len, fragment_num, out_file, depth_of_seq, read_length, thread, my_seed):
-    if my_seed == -1:
-        my_seed = (thread + get_time_dependent_int()) % MAX_SEED
-    if my_seed is not None:
-        seed(my_seed)
-    for identifier, info in fasta_genome.items():
-        len_of_seq = len(info.seq)
-        distribution = ModifiedExponential(len_of_seq / mean_len / 2, len_of_seq, name='ModifiedExponential')
-        for iteration in range(depth_of_seq):
-            out_write(out_file, info.description, iteration, seq_type,
-                      get_reads(get_fragments(info.seq, generate_samples(distribution, len_of_seq, fragment_num)),
-                                read_length), thread, my_seed)
