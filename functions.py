@@ -20,14 +20,11 @@ class Profiler(object):
 def get_time_dependent_int(): return int(''.join(str(time()).split('.')))
 
 
-def print_verbose(string, session_id, logfile='', verbose=False, params=None):
+def print_verbose(string='', session_id=0, logfile='', verbose=False, params=None):
     if verbose:
         with open(logfile, 'a', encoding='utf8') as out:
-            out.write('Session_ID=' + str(session_id))
-            out.write('\nTime=' + str(time()))
-            out.write('\nParams: ' + str(params) + '\n')
-            out.write(string)
-            out.write('\n\n')
+            out.write('Session_ID={:d}\nTime={:f}\nParams: {:s}\n{:s}\n\n'
+                      .format(session_id, time(), str(params), string))
     print(string)
 
 
@@ -87,7 +84,7 @@ def cmd_parse():
             raise FileNotFoundError
 
     if args.type[0] not in ['pe', 'sr']:
-        print_verbose('ERROR! --type=' + args.type[0] + ' is not allowed. Specify it only as \'pe\' or \'sr\'',
+        print_verbose('ERROR! --type={:s} is not allowed. Specify it only as \'pe\' or \'sr\''.format(args.type[0]),
                       session_id, args.log, args.verbose, params)
         raise ValueError
 
@@ -99,8 +96,8 @@ def cmd_parse():
     if args.out is not None:
         out_file = args.out
     else:
-        out_file = '.'.join(''.join(file).split('.')[:-1]) + 'disassemble_' + args.type[0] + '_id' + str(session_id) \
-                   + '.fastq'
+        out_file = ('.'.join(''.join(file).split('.')[:-1]) + 'disassemble_{:s}_id{:d}.fastq')\
+            .format(args.type[0], session_id)
 
     if args.jobs[0] == -1:
         jobs = cpu_count()
@@ -121,8 +118,8 @@ def generate_samples(distribution, len_of_seq, fragment_num):
 
 
 def get_fragments(seq, samples):
-    cleavage_sites = random_integers(0, len(seq) - 1, len(samples))
     seq_len = len(seq)
+    cleavage_sites = random_integers(0, seq_len - 1, len(samples))
     return [seq[site:end] for site, end in zip(cleavage_sites, cleavage_sites + samples) if end < seq_len]
 
 
@@ -135,13 +132,11 @@ def out_write(file, desc, iteration, seq_type, reads, thread, my_seed):
         number_of_mates = 2
     else:
         number_of_mates = 1
-    description = '@' + desc + ' iter=' + str(iteration) + ' thread=' + str(thread) + ' seed=' + str(my_seed)
+    description = '@{:s} iter={:d} thread={:d} seed={:d}'.format(desc, iteration, thread, my_seed)
     with open(file, 'a', encoding='utf8') as out:
         for number, read in enumerate(reads):
             for i in range(number_of_mates):
-                out.write(description + ' read=' + str(number) + '.' + str(i) + '\n')
-                out.write(str(read[i]))
-                out.write('\n+\n')
+                out.write((description + ' read={:d}.{:d}\n{:s}\n+\n').format(number, i, str(read[i])))
                 out.write('G' * len(read[i]) + '\n')  # FIXME!!! Error distribution is not implemented
 
 
