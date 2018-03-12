@@ -23,8 +23,9 @@ def main():
         processes[-1].start()
     for process in processes:
         process.join()
-    print_verbose('The program completed disassembling without any errors. Elapsed time=' + str(time() - start_time),
-                  session_id, logfile, verbose, params)
+    print_verbose(
+        'The program completed disassembling without any errors. Elapsed time={:f}'.format(time() - start_time),
+        session_id, logfile, verbose, params)
 
 
 if __name__ == '__main__':
