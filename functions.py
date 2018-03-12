@@ -1,10 +1,11 @@
 from time import time
 from argparse import ArgumentParser
 from os.path import isfile
-from numpy import logical_and
+from numpy import logical_and, fromiter, array
 from numpy.random import random_integers, seed
 from multiprocessing import cpu_count
 from pdf import ModifiedExponential
+from csv import reader as csv_reader
 
 MAX_SEED = 4294967295  # 2**32 - 1
 
@@ -141,14 +142,26 @@ def get_reads(fragments, length):
     return [(fragment[:length], fragment[-length:]) for fragment in fragments]
 
 
-def out_write(file, desc, iteration, seq_type, reads, thread, my_seed):
+def out_write(filename, desc, iteration, seq_type, reads, thread, my_seed):
     if seq_type == 'pe':
         number_of_mates = 2
     else:
         number_of_mates = 1
     description = '@{:s} iter={:d} thread={:d} seed={:d}'.format(desc, iteration, thread, my_seed)
-    with open(file, 'a', encoding='utf8') as out:
+    with open(filename, 'a', encoding='utf8') as out:
         for number, read in enumerate(reads):
             for i in range(number_of_mates):
                 out.write((description + ' read={:d}.{:d}\n{:s}\n+\n').format(number, i, str(read[i])))
                 out.write('G' * len(read[i]) + '\n')  # FIXME!!! Error distribution is not implemented
+
+
+def read_fragment_distribution(filename, delimiter='\t', quotechar='|'):
+    with open(filename) as distribution_file:
+        csv_iterator = csv_reader(distribution_file, delimiter=delimiter, quotechar=quotechar)
+        try:
+            distribution = array([fromiter(map(int, row), dtype=float) for row in csv_iterator])
+        except ValueError:
+            distribution = array([fromiter(map(int, row), dtype=float) for row in csv_iterator])
+    distribution = [distribution[:, :-1].astype(int, copy=False), distribution[:, -1]]
+    distribution[1] /= distribution[1].sum()
+    return distribution
