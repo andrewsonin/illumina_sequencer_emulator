@@ -138,8 +138,8 @@ def disassembler(fasta_genome, seq_type, fragments_number, out_file, depth_of_se
                       thread, my_seed)
 
 
-def generate_samples(distribution, len_of_seq, fragment_num):
-    samples = distribution.rls(size=fragment_num)
+def generate_samples(distribution, len_of_seq, fragments_num):
+    samples = distribution.rls(fragments_num)
     return list(map(int, samples[logical_and(0 < samples, samples < len_of_seq)]))
 
 
